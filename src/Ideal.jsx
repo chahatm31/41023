@@ -84,9 +84,9 @@ const initialCuisines = [
   },
 ];
 
-const CuisineList = ({ onSelectCuisine }) => (
+const CuisineList = ({ cuisines, onSelectCuisine }) => (
   <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-4">
-    {initialCuisines.map((cuisine) => (
+    {cuisines.map((cuisine) => (
       <Button
         key={cuisine.id}
         onClick={() => onSelectCuisine(cuisine)}
@@ -290,12 +290,16 @@ export default function App() {
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
 
   const handleSelectCuisine = (cuisine) => {
-    setSelectedCuisine(cuisine);
+    const updatedCuisine = cuisinesData.find((c) => c.id === cuisine.id);
+    setSelectedCuisine(updatedCuisine);
     setSelectedRestaurant(null);
   };
 
   const handleSelectRestaurant = (restaurant) => {
-    setSelectedRestaurant(restaurant);
+    const updatedRestaurant = selectedCuisine.restaurants.find(
+      (r) => r.id === restaurant.id
+    );
+    setSelectedRestaurant(updatedRestaurant);
   };
 
   const handleBack = () => {
@@ -329,6 +333,27 @@ export default function App() {
         }),
       }))
     );
+
+    setSelectedCuisine((prevCuisine) => ({
+      ...prevCuisine,
+      restaurants: prevCuisine.restaurants.map((restaurant) => {
+        if (restaurant.id === restaurantId) {
+          const newReviews = [
+            ...restaurant.reviews,
+            { ...review, id: Date.now() },
+          ];
+          const newRating =
+            newReviews.reduce((sum, r) => sum + r.rating, 0) /
+            newReviews.length;
+          return {
+            ...restaurant,
+            reviews: newReviews,
+            rating: newRating,
+          };
+        }
+        return restaurant;
+      }),
+    }));
 
     if (selectedRestaurant && selectedRestaurant.id === restaurantId) {
       setSelectedRestaurant((prevRestaurant) => {
@@ -381,7 +406,10 @@ export default function App() {
             <h2 className="text-3xl font-semibold mb-6 text-center text-gray-700">
               Choose Your Cuisine
             </h2>
-            <CuisineList onSelectCuisine={handleSelectCuisine} />
+            <CuisineList
+              cuisines={cuisinesData}
+              onSelectCuisine={handleSelectCuisine}
+            />
           </>
         )}
         {selectedCuisine && !selectedRestaurant && (
